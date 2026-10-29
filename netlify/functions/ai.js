@@ -41,6 +41,7 @@ exports.handler = async (event) => {
   const models = [...new Set([process.env.GEMINI_MODEL, ...(await pickModels()), 'gemini-flash-latest'].filter(Boolean))].slice(0, 5);
   let last = null;
   try {
+    for (let round = 0; round < 2; round++) {
     for (const m of models) {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY }, body: JSON.stringify(body) });
       if (r.ok) {
@@ -51,9 +52,11 @@ exports.handler = async (event) => {
       }
       let msg = ''; try { msg = (await r.json()).error.message; } catch { /* no body */ }
       last = { status: r.status, msg: String(msg).slice(0, 200) };
-      if (r.status === 429) return json(429, { error: 'The free AI quota is used up for now. Try again later.' });
       if (r.status === 401 || r.status === 403 || (r.status === 400 && /api key/i.test(msg))) break; // a different model will not help
+      }
+    if (round === 0 && last && (last.status === 429 || last.status >= 500)) await new Promise((res) => setTimeout(res, 1200)); else break;
     }
+    if (last && (last.status === 429 || last.status >= 500)) return json(429, { error: 'The shared free AI is busy right now. Try again in a minute, or add your own free Gemini key in settings.' });
     return json(502, { error: `The AI service returned an error (${last ? last.status + ': ' + last.msg : 'unknown'}).` });
   } catch { return json(502, { error: 'Could not reach the AI service.' }); }
 };
