@@ -2,7 +2,23 @@
 // Set GEMINI_API_KEY in Netlify: Site configuration > Environment variables.
 const HITS = new Map(); // best-effort per-IP limiter (resets when the function instance restarts)
 const LIMIT = +process.env.AI_LIMIT_PER_10_MIN || 20;
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Google retires models often, so ask Google which fast models this key can use right now.
+let MODEL_CACHE = { at: 0, list: [] };
+async function pickModels() {
+  if (Date.now() - MODEL_CACHE.at < 3600000 && MODEL_CACHE.list.length) return MODEL_CACHE.list;
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY } });
+    if (!r.ok) return MODEL_CACHE.list;
+    const j = await r.json();
+    const ver = (n) => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]);
+    const list = (j.models || [])
+      .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent') && /^models\/gemini-[\d.]+-flash(-lite)?$/.test(m.name))
+      .map((m) => m.name.replace('models/', ''))
+      .sort((a, b) => ver(b) - ver(a) || (/lite/.test(a) ? 1 : 0) - (/lite/.test(b) ? 1 : 0));
+    MODEL_CACHE = { at: Date.now(), list };
+    return list;
+  } catch { return MODEL_CACHE.list; }
+}
 const json = (status, body) => ({ statusCode: status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }, body: JSON.stringify(body) });
 
 exports.handler = async (event) => {
@@ -22,7 +38,7 @@ exports.handler = async (event) => {
   if (!user || system.length + user.length > 60000) return json(400, { error: 'Request too large' });
   const maxTokens = Math.min(Math.max(+p.maxTokens || 1500, 100), 4000);
   const body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: { maxOutputTokens: maxTokens + 1500, responseMimeType: 'application/json', temperature: 0.7 } };
-  const models = [...new Set([MODEL, 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'])];
+  const models = [...new Set([process.env.GEMINI_MODEL, ...(await pickModels()), 'gemini-flash-latest'].filter(Boolean))].slice(0, 5);
   let last = null;
   try {
     for (const m of models) {
