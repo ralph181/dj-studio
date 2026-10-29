@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121314">
+<meta name="color-scheme" content="dark light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>DJ Intelligence Studio</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+<div class="app" id="app" data-view="library">
+  <header class="top">
+    <div class="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="var(--surface-2)"/><g fill="var(--a)"><rect x="6" y="14" width="3" height="8" rx="1.5"/><rect x="11" y="8" width="3" height="16" rx="1.5"/><rect x="16" y="11" width="3" height="12" rx="1.5"/></g><g fill="var(--b)"><rect x="21" y="6" width="3" height="18" rx="1.5"/></g></svg><span class="name">DJ Intelligence<br class="nb"> Studio</span></div>
+    <div class="queue" id="queue" hidden aria-live="polite"><span id="queueText"></span><i class="bar"><b id="queueBar"></b></i></div>
+    <div class="actions">
+      <button class="btn icon" id="aiBtn" aria-label="AI and web settings" title="AI and web settings"><i data-icon="spark"></i></button>
+      <button class="btn icon" id="themeBtn" aria-label="Switch light or dark theme" title="Switch theme"><i data-icon="moon"></i></button>
+      <button class="btn" id="installBtn" hidden><i data-icon="install"></i><span>Install</span></button>
+      <label class="btn primary" for="fileIn"><i data-icon="upload"></i><span>Import</span></label>
+      <input id="fileIn" type="file" multiple accept="audio/*,video/*,.mp3,.wav,.flac,.m4a,.aac,.ogg,.opus,.aiff,.aif,.mp4,.mov,.mkv,.webm,.m4v" hidden>
+    </div>
+  </header>
+
+  <nav class="side" aria-label="Library">
+    <h2>Library</h2>
+    <div class="filters" id="filters" role="group" aria-label="Filter tracks"></div>
+    <h2>Camelot wheel</h2>
+    <div class="wheelwrap"><svg id="wheel" viewBox="-110 -110 220 220" role="group" aria-label="Camelot wheel. Select a key to filter."></svg></div>
+    <p class="hint" id="wheelHint">Pick a track and its compatible keys light up. Click a key to filter the library.</p>
+    <p class="hint" id="storageNote"></p>
+  </nav>
+
+  <main class="main" id="main">
+    <section class="decks" id="decks" aria-label="Decks">
+      <article class="deck" id="deck-a" data-deck="a">
+        <header>
+          <span class="ch">A</span>
+          <div class="who"><b class="d-title">Select a track</b><small class="d-artist">Pick any track in the library</small></div>
+          <div class="vu" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <button class="iconbtn d-star" aria-label="Star track" aria-pressed="false" disabled><i data-icon="star"></i></button>
+          <button class="play" aria-label="Play deck A" disabled><i data-icon="play"></i></button>
+        </header>
+        <div class="readout">
+          <div><span class="big d-bpm">—</span><label>BPM <b class="dot d-bpmdot" hidden></b></label></div>
+          <div><span class="kchip big d-key">—</span><label>Key <b class="dot d-keydot" hidden></b></label></div>
+          <div><span class="big d-energy">—</span><label>Energy</label></div>
+          <div><span class="big d-mix">—</span><label>Mixability</label></div>
+          <span class="time d-time">0:00 / 0:00</span>
+        </div>
+        <canvas class="wave" aria-label="Deck A waveform. Click to seek."></canvas>
+        <div class="cues" role="group" aria-label="Deck A cue points"><button data-cue="0"></button><button data-cue="1"></button><button data-cue="2"></button><button data-cue="3"></button></div>
+        <p class="d-note">Intro and outro estimates appear after analysis.</p>
+        <div class="deckfoot">
+          <div class="fix"><span>Correct</span><button class="chip" data-fix="half" disabled title="Halve the BPM">½ BPM</button><button class="chip" data-fix="double" disabled title="Double the BPM">2× BPM</button><select class="keysel" disabled aria-label="Set key for deck A"></select></div>
+          <button class="btn small danger" id="rmTrack" disabled><i data-icon="trash"></i><span>Remove track</span></button>
+        </div>
+      </article>
+      <article class="deck" id="deck-b" data-deck="b">
+        <header>
+          <span class="ch">B</span>
+          <div class="who"><b class="d-title">Next track</b><small class="d-artist">The best match for deck A loads here</small></div>
+          <div class="vu" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <button class="iconbtn d-star" aria-label="Star track" aria-pressed="false" disabled><i data-icon="star"></i></button>
+          <button class="play" aria-label="Play deck B" disabled><i data-icon="play"></i></button>
+        </header>
+        <div class="readout">
+          <div><span class="big d-bpm">—</span><label>BPM <b class="dot d-bpmdot" hidden></b></label></div>
+          <div><span class="kchip big d-key">—</span><label>Key <b class="dot d-keydot" hidden></b></label></div>
+          <div><span class="big d-energy">—</span><label>Energy</label></div>
+          <div><span class="big d-mix">—</span><label>Mixability</label></div>
+          <span class="time d-time">0:00 / 0:00</span>
+        </div>
+        <canvas class="wave" aria-label="Deck B waveform. Click to seek."></canvas>
+        <div class="cues" role="group" aria-label="Deck B cue points"><button data-cue="0"></button><button data-cue="1"></button><button data-cue="2"></button><button data-cue="3"></button></div>
+        <p class="d-note" id="matchNote">The best match for deck A loads here.</p>
+        <div class="deckfoot">
+          <div class="fix"><span>Correct</span><button class="chip" data-fix="half" disabled title="Halve the BPM">½ BPM</button><button class="chip" data-fix="double" disabled title="Double the BPM">2× BPM</button><select class="keysel" disabled aria-label="Set key for deck B"></select></div>
+          <button class="btn small" id="syncBtn" disabled><i data-icon="sync"></i><span>Sync tempo to A</span></button>
+        </div>
+        <p class="d-note" id="syncNote"></p>
+      </article>
+    </section>
+
+    <div class="seg" id="seg" role="tablist" aria-label="Section">
+      <button role="tab" data-view="library" aria-selected="true">Library <b id="segLib">0</b></button>
+      <button role="tab" data-view="playlists" aria-selected="false">Playlists <b id="segPl">0</b></button>
+      <button role="tab" data-view="discover" aria-selected="false">Discover</button>
+    </div>
+
+    <section class="library" id="library" aria-label="Track library">
+      <div class="toolbar">
+        <label class="search"><i data-icon="search"></i><input id="search" type="search" placeholder="Search artist, title or file name" autocomplete="off"></label>
+        <select id="filterSel" aria-label="Filter tracks"></select>
+        <button class="btn small toggle" id="matchOnly" aria-pressed="false" title="Show only tracks that mix well with deck A"><i data-icon="spark"></i><span>Matches for A</span></button>
+        <span class="count" id="count"></span>
+      </div>
+      <div class="table" id="table" role="table" aria-label="Tracks">
+        <div class="thead" role="row">
+          <button data-sort="title" role="columnheader">Track</button>
+          <button data-sort="bpm" role="columnheader" class="num">BPM</button>
+          <button data-sort="key" role="columnheader">Key</button>
+          <button data-sort="energy" role="columnheader" class="hide-s">Energy</button>
+          <button data-sort="mixability" role="columnheader" class="num hide-s">Mix</button>
+          <button data-sort="match" role="columnheader" class="num">Match</button>
+          <span></span>
+        </div>
+        <div id="rows"></div>
+      </div>
+      <div class="tools">
+        <label class="btn small" for="plIn"><i data-icon="list"></i><span>Import playlist file</span></label>
+        <input id="plIn" type="file" accept=".m3u,.m3u8,.txt,.xml" hidden>
+        <button class="btn small" id="rmFailed" hidden><i data-icon="trash"></i><span>Remove failed tracks</span></button>
+        <button class="btn small danger" id="clearBtn"><i data-icon="trash"></i><span>Clear library</span></button>
+        <span class="hint">M3U, M3U8, Rekordbox and VirtualDJ XML playlists are matched to your library by file name. Your DJ software databases are never touched.</span>
+      </div>
+    </section>
+
+    <section class="plsec" id="plsec" aria-label="Playlists">
+      <details class="gen" id="genBox" open>
+        <summary><h2>Generate a playlist</h2></summary>
+        <div data-modes class="modes" role="radiogroup" aria-label="Session mode"></div>
+        <p class="hint" data-modedesc></p>
+        <div class="genrow">
+          <label for="genLen">Tracks<select id="genLen"><option>6</option><option>8</option><option selected>10</option><option>12</option><option>15</option><option>20</option><option>30</option></select></label>
+          <label for="genScope">Use<select id="genScope"><option value="all">All analyzed tracks</option><option value="starred">Starred tracks only</option><option value="shown">Tracks shown in library</option></select></label>
+          <label for="genStart">Start with<select id="genStart"><option value="auto">Best opener for this mode</option><option value="deck">Track on deck A</option></select></label>
+          <button class="btn primary" id="genBtn"><i data-icon="spark"></i><span>Generate</span></button>
+        </div>
+        <p class="hint" id="genNote"></p>
+      </details>
+      <div class="plwrap">
+        <div class="pllist" id="plList" aria-label="Saved playlists"></div>
+        <article class="pldetail" id="plDetail" aria-live="polite"></article>
+      </div>
+    </section>
+
+    <section class="discsec" id="discsec" aria-label="Discover new tracks">
+      <details class="gen" id="discBox" open>
+        <summary><h2>Find new tracks</h2></summary>
+        <p class="hint" id="discMode"></p>
+        <div class="genrow">
+          <label for="discSeed">Based on<select id="discSeed"><option value="deck">Track on deck A</option><option value="playlist">Current playlist</option><option value="library">Whole library</option></select></label>
+          <label for="discCount">How many<select id="discCount"><option>6</option><option selected>8</option><option>12</option><option>16</option></select></label>
+          <label for="discFocus" class="grow">Focus (optional)<input id="discFocus" type="text" maxlength="80" placeholder="e.g. afro house, 2020s, female vocals"></label>
+          <button class="btn primary" id="discBtn"><i data-icon="spark"></i><span>Find tracks</span></button>
+        </div>
+        <p class="hint" id="discNote"></p>
+      </details>
+      <div id="discOut" class="discout" aria-live="polite"></div>
+      <div id="wishBox" class="wish"></div>
+    </section>
+  </main>
+
+  <aside class="set" id="set" aria-label="Mix assistant">
+    <section>
+      <h2>Session mode</h2>
+      <div data-modes class="modes" role="radiogroup" aria-label="Session mode"></div>
+      <p class="hint" data-modedesc></p>
+    </section>
+    <section>
+      <h2>Next up <small id="seedName"></small></h2>
+      <div class="airow"><button class="btn small" id="aiRerank"><i data-icon="spark"></i><span>AI re-rank</span></button><small class="hint" id="aiRecNote"></small></div>
+      <ol class="recs" id="recs"></ol>
+    </section>
+  </aside>
+
+  <nav class="tabs" aria-label="Views">
+    <button data-view="library" aria-pressed="true"><i data-icon="list"></i><span>Library</span></button>
+    <button data-view="decks" aria-pressed="false"><i data-icon="wave"></i><span>Decks</span></button>
+    <button data-view="playlists" aria-pressed="false"><i data-icon="file"></i><span>Playlists</span></button>
+    <button data-view="discover" aria-pressed="false"><i data-icon="search"></i><span>Discover</span></button>
+    <button data-view="assist" aria-pressed="false"><i data-icon="spark"></i><span>Assist</span></button>
+  </nav>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+<dialog id="aiDlg" class="dlg" aria-labelledby="aiDlgT">
+  <form method="dialog" id="aiForm">
+    <header><h2 id="aiDlgT">AI and web</h2><button class="iconbtn" value="close" aria-label="Close"><i data-icon="x"></i></button></header>
+    <section>
+      <h3>Web lookups</h3>
+      <label class="chk"><input type="checkbox" id="cfgWeb"> <span>Detect genres and verify suggestions online</span></label>
+      <p class="hint">Sends only artist and title text to MusicBrainz and Apple Music search. No audio and no files ever leave your device.</p>
+    </section>
+    <section>
+      <h3>AI assistant <small>optional</small></h3>
+      <label>Provider<select id="cfgProvider"><option value="gemini">Google Gemini, free tier</option><option value="claude">Anthropic Claude, paid</option></select></label>
+      <label class="keyonly"><span id="cfgKeyLabel">API key</span><input id="cfgKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-..."></label>
+      <label class="keyonly">Model<select id="cfgModel"><option value="claude-sonnet-5-5">Sonnet 5.5, balanced</option><option value="claude-haiku-5-5">Haiku 5.5, fastest and cheapest</option><option value="claude-opus-5-5">Opus 5.5, smartest</option></select></label>
+      <label class="chk keyonly" id="cfgSearchRow"><input type="checkbox" id="cfgSearch"> <span>Let the AI search the web (checks that tracks exist, BPM and key)</span></label>
+      <p class="hint" id="cfgPrivacy"></p>
+      <div class="dlgrow"><button type="button" class="btn small" id="cfgTest">Test connection</button><button type="button" class="btn small danger keyonly" id="cfgClear">Remove key</button><span class="hint" id="cfgStatus"></span></div>
+    </section>
+    <section>
+      <h3>Genres</h3>
+      <div class="dlgrow"><button type="button" class="btn small" id="cfgDetect"><i data-icon="refresh"></i><span>Detect genres for my library</span></button><span class="hint" id="cfgGenStat"></span></div>
+    </section>
+    <footer><button class="btn primary" value="close">Done</button></footer>
+  </form>
+</dialog>
+<script src="app.js"></script>
+<script src="ai.js"></script>
+</body>
+</html>

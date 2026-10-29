@@ -1,0 +1,21 @@
+{
+  "name": "DJ Intelligence Studio",
+  "short_name": "DJ Studio",
+  "description": "Analyze BPM, key and energy for your tracks, then build compatible DJ sets. Runs offline on your device.",
+  "id": "/dj-intelligence-studio",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#121314",
+  "theme_color": "#121314",
+  "categories": ["music", "entertainment", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    { "action": "./index.html", "accept": { "audio/*": [".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg", ".opus", ".aiff"], "video/*": [".mp4", ".mov", ".mkv", ".webm", ".m4v"] } }
+  ]
+}
